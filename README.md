@@ -57,14 +57,7 @@ pixi run steer run --model rt --task rel_f1_driver_dnf
 By default this applies STEER's traversal filter in both directions
 (parent to child and child to parent), with the universal probability profile
 and the Claude-sourced ranking shipped for the task. Add `--compare` to also run
-the unmodified baseline sampler and print both results:
-
-```
-rel_f1_driver_dnf | rt | config: configs/tasks/claude/rel_f1_driver_dnf.json | profile: configs/profiles/universal.json
-            AUROC (%)    Tokens
-STEER           81.40     999.4
-baseline        78.55    1005.2
-```
+the unmodified baseline sampler and print both results (the metric and `Tokens`).
 
 | Option | Meaning |
 |---|---|
