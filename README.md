@@ -36,7 +36,9 @@ cd models/griffin && pixi install && cd ../..                          # Griffin
 ## Download checkpoints and data
 
 Checkpoints and preprocessed data are hosted on Hugging Face under
-[`abdallam1007`](https://huggingface.co/abdallam1007). Download what one task needs, or everything for a model:
+[`abdallam1007`](https://huggingface.co/abdallam1007), except RT-J's checkpoints and its data for
+six of the RelBench databases, which come from the RT-J authors' own repositories
+(pinned to the revisions our results use). Download what one task needs, or everything for a model:
 
 ```bash
 pixi run steer setup rt --task rel_f1_driver_dnf      # small: rel-f1 is about 15 MB

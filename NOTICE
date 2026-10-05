@@ -29,13 +29,20 @@ component lives in its own directory, its license notice is kept there.
    The benchmark datasets carry their own terms; see the cards of the
    Hugging Face repositories that host them.
 
-4. Hosted artifacts (preprocessed data and checkpoints) are mirrored on
-   Hugging Face together with the license and attribution of their source:
-   - Preprocessed v1 databases: stanford-star/relbench-preprocessed
-     (CC BY 4.0; cite RelBench and the RT-J paper).
-   - rel-arxiv and rel-ratebeer: derived from stanford-star/relbench-v2-extra
-     (CC BY-SA 4.0; derivatives keep CC BY-SA 4.0 and attribution).
-   - RT-J weights: stanford-star/rt-j (CC BY 4.0).
+4. Checkpoints and preprocessed data.
+   Downloaded from the RT-J authors' repositories, pinned to the revisions used
+   for the paper, and not re-hosted by STEER:
+   - RT-J weights: stanford-star/rt-j. At the pinned revision they are released
+     under CC BY-NC-SA 4.0; the LICENSE file is downloaded with them.
+   - Preprocessed rel-amazon, rel-avito, rel-f1, rel-hm, rel-stack and rel-trial
+     for RT-J: stanford-star/relbench-preprocessed (CC BY 4.0; cite RelBench
+     and the RT-J paper).
+   Hosted on Hugging Face by the STEER authors, each with its source's license
+   and attribution on its card:
+   - Preprocessed data for RT and Griffin, and rel-arxiv and rel-ratebeer for
+     RT-J, derived from RelBench (rel-arxiv and rel-ratebeer from
+     stanford-star/relbench-v2-extra, CC BY-SA 4.0), shared under CC BY-SA 4.0
+     with attribution.
    - RT leave-one-database-out checkpoints: trained by the STEER authors with
      the RT training pipeline, released under CC BY 4.0.
    - Griffin checkpoints: provided by the Relational Transformer authors,
