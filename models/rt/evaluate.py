@@ -23,7 +23,7 @@ def load_checkpoint(checkpoint_path: str, num_blocks: int, d_model: int, d_text:
 
 def evaluate_checkpoint(
     net: RelationalTransformer,
-    eval_tasks: list[tuple[str, str, str, str, list[str], str]],
+    eval_tasks: list[tuple[str, str, str, str, str]],
     batch_size: int,
     seq_len: int,
     max_bfs_width: int,
@@ -31,23 +31,20 @@ def evaluate_checkpoint(
     d_text: int,
     max_eval_steps: int,
     sampler_config_path: str | None = None,
-    num_workers: int = 2,
     device: str = "cuda",
     reg_metric: str = "r2",
 ) -> dict[tuple[str, str, str], dict]:
-    """eval_tasks: list of (db_name, table_name, target_column, split, columns_to_drop, task_type).
+    """eval_tasks: list of (db_name, table_name, target_column, split, task_type).
 
-    Returns {(db_name, table_name, split): {metric_name, metric_value, sample_size: {avg_filled_tokens}, ...}}.
+    Returns {(db_name, table_name, split): {metric_name, metric_value, sample_size: {avg_filled_tokens}}}.
     """
     results: dict[tuple[str, str, str], dict] = {}
 
-    for db_name, table_name, target_column, split, columns_to_drop, task_type in eval_tasks:
+    for db_name, table_name, target_column, split, task_type in eval_tasks:
         eval_dataset = RelationalDataset(
-            tasks=[(db_name, table_name, target_column, split, columns_to_drop)],
+            tasks=[(db_name, table_name, target_column, split)],
             batch_size=batch_size,
             seq_len=seq_len,
-            rank=0,
-            world_size=1,
             max_bfs_width=max_bfs_width,
             embedding_model=embedding_model,
             d_text=d_text,
@@ -55,10 +52,10 @@ def evaluate_checkpoint(
             sampler_config_path=sampler_config_path,
         )
         eval_dataset.sampler.shuffle_py(0)
-        eval_loader = DataLoader(eval_dataset, batch_size=None, num_workers=num_workers, persistent_workers=False, pin_memory=True, in_order=True)
+        eval_loader = DataLoader(eval_dataset, batch_size=None, num_workers=2, persistent_workers=False, pin_memory=True, in_order=True)
 
-        preds, labels, losses = [], [], []
-        filled_tokens, seq_utilizations = [], []
+        preds, labels = [], []
+        filled_tokens = []
 
         with torch.inference_mode():
             batch_idx = 0
@@ -72,11 +69,9 @@ def evaluate_checkpoint(
                 batch["is_padding"][true_batch_size:, :] = True
 
                 non_padding = (~batch["is_padding"][:true_batch_size]).sum(dim=1)
-                utilization = non_padding.float() / batch["is_padding"].shape[1]
                 filled_tokens.extend(non_padding.detach().cpu().tolist())
-                seq_utilizations.extend(utilization.detach().cpu().tolist())
 
-                loss, yhat_dict = net(batch)
+                yhat_dict = net(batch)
 
                 if task_type == "clf":
                     yhat = yhat_dict["boolean"][batch["is_targets"]]
@@ -85,7 +80,6 @@ def evaluate_checkpoint(
                     yhat = yhat_dict["number"][batch["is_targets"]]
                     y = batch["number_values"][batch["is_targets"]].flatten()
 
-                losses.append(loss.item())
                 preds.append(yhat.flatten())
                 labels.append(y)
 
@@ -109,7 +103,6 @@ def evaluate_checkpoint(
             "metric_name": metric_name,
             "metric_value": metric_value,
             "sample_size": {"avg_filled_tokens": float(np.mean(filled_tokens))},
-            "avg_seq_utilization": float(np.mean(seq_utilizations)),
         }
 
     return results

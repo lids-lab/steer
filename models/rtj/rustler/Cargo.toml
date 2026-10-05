@@ -7,25 +7,13 @@ edition = "2024"
 name = "_rustler"
 crate-type = ["cdylib"]
 
-# `vecdb`: opt-in FAISS-similarity seed selection in the Sampler. Off by
-#   default so the Sampler cdylib builds without FAISS (no cmake/BLAS).
-[features]
-default = []
-vecdb = ["dep:faiss"]
-
 [dependencies]
 serde_json = "*"
-glob = "*"
 itertools = "*"
 serde = { version = "*", features = ["derive"] }
 rand = "0.9.1"
-clap = { version = "*", features = ["derive"] }
 pyo3 = { version = "*", features = ["abi3-py312"] }
 memmap2 = "*"
 rkyv = { version = "*", features = ["pointer_width_64"] }
 numpy = { version = "*", features = ["half"] }
-indicatif = "*"
 half = { version = "*", features = ["rkyv"] }
-rayon = "*"
-dashmap = "*"
-faiss = { version = "*", features = ["static"], optional = true }

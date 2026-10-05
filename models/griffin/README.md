@@ -18,8 +18,9 @@ not apply to it; only the traversal filter does.
 - `relfm/griffin/hmodel.py`: the model architecture.
 - `relfm/griffin/hdataset.py`, `hdataset_prob.py`, `hloaderwrapper.py`: the
   graph, the neighbor sampler and its batching.
-- `relfm/griffin/hFloatEmb.py` and the `float*.pt` files: the float encoder
-  and decoder.
+- `relfm/griffin/hFloatEmb.py` and `floatenc-728.pt`, `floatdec-728.pt`: the
+  float encoder and decoder.
+- `relfm/griffin/metric.py`: the AUC, R2 and MAE metrics.
 - `evaluate.py`, `steer_eval.py`: load a checkpoint, evaluate one task's test
   split, and write the metric and the sampled node and edge counts as JSON.
   Neighbor sampling is seeded (seed 42) so a run is repeatable.
@@ -28,8 +29,8 @@ not apply to it; only the traversal filter does.
 
 All of it is in the sampler, `relfm/griffin/hdataset.py` and `hdataset_prob.py`:
 
-- The sampler reads a per-task JSON config: which filters are on, the tier of
-  each edge, and a keep probability per tier. The path is passed explicitly
+- The sampler reads a per-task JSON config: which edge toggles are on, the
+  tier of each edge, and a keep probability per tier. The path is passed explicitly
   through `subgraphargs` from `evaluate.py`.
 - In `getedge`, after the fanout cap (fanout 20, 2 hops), each remaining
   candidate edge is kept with the probability of its tier, using a coin flip.

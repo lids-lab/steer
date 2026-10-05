@@ -24,9 +24,7 @@ class AnthropicProvider:
             "messages": [{"role": "user", "content": prompt}],
         }
         if reasoning_effort is not None:
-            # Claude 5 controls thinking via adaptive mode + a separate effort
-            # knob, not a token budget (the older "enabled"/budget_tokens
-            # thinking config is rejected by this model with a 400).
+            # Claude 5 uses adaptive thinking plus an effort setting, not a token budget.
             payload["thinking"] = {"type": "adaptive"}
             payload["output_config"] = {"effort": reasoning_effort}
 

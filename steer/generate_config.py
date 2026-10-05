@@ -44,7 +44,7 @@ def main() -> None:
     parser.add_argument("--model", default=None, help="Model name within the provider (default: the provider's own default)")
     parser.add_argument("--column-filter", action="store_true", help="Also rank columns (a third LLM call), for use with `steer run --column-filter`")
     parser.add_argument("--reasoning-effort", default="high", choices=["low", "medium", "high", "none"], help="'none' omits the setting, for models without reasoning (default: high, as in the paper)")
-    parser.add_argument("--out", default=None, help=f"Output path (default: generated/<provider>/<task>.json)")
+    parser.add_argument("--out", default=None, help="Output path (default: generated/<provider>/<task>.json)")
     parser.add_argument("--force", action="store_true", help="Overwrite the output file if it exists")
     args = parser.parse_args()
 

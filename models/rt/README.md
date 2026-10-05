@@ -3,26 +3,25 @@
 STEER is implemented inside the sampler of this model. This directory is an
 inference-only copy of the [Relational Transformer](https://github.com/stanford-star/relational-transformer)
 (MIT, see [LICENSE](LICENSE)) with STEER's traversal and column filters added.
-Training, preprocessing and embedding-generation code were removed.
+Training, preprocessing, benchmark and embedding-generation code were removed.
 
 You normally don't call anything here directly: `steer run --model rt ...`
 from the repository root builds a sampler config and calls `steer_eval.py`.
 
 ## Contents
 
-- `model.py`, `data.py`: the architecture and the sampler-backed dataset.
-- `evaluate.py`, `steer_eval.py`: load a checkpoint, evaluate one task's test
-  split, and write the metric and average token count as JSON.
+- `model.py`, `data.py`: the forward pass and the sampler-backed dataset.
+- `evaluate.py`, `steer_eval.py`: load a checkpoint, evaluate one task's split,
+  and write the metric and average token count as JSON.
 - `rustler/`: the Rust sampler (`src/fly.rs`) that builds each context.
 
 ## What STEER changes
 
-All of it is in the sampler, `rustler/src/fly.rs`, and in `data.py`, which passes
-the config path down to it:
+All of it is in the sampler, `rustler/src/fly.rs` (look for `// STEER:` comments):
 
-- The sampler reads a per-task JSON config: which filters are on, the tier of
-  each edge and column, and a keep probability per tier. The path is passed
-  explicitly from Python to Rust.
+- The sampler reads a per-task JSON config (toggles, the tier of each edge and
+  column, and a keep probability per tier). `steer_eval.py` passes its path
+  through `evaluate.py` and `data.py` to the Rust `Sampler`.
 - `p2f_edge_probabilistic_at_push_keep_probability`,
   `f2p_edge_probabilistic_at_push_keep_probability` and
   `column_filter_keep_probability` map an edge's or column's tier to its keep

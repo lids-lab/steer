@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument("--max-eval-steps", type=int, default=-1)
     parser.add_argument("--sampler-config-path", default=None)
     parser.add_argument("--split", default="test", choices=["train", "val", "test"])
-    parser.add_argument("--reg-metric", default=None, choices=["mae", "r2"], help="override the regression metric baked into this dataset's metatask.yaml; ignored for classification tasks")
+    parser.add_argument("--reg-metric", default=None, choices=["mae", "r2"], help="override the regression metric (ignored for classification)")
     parser.add_argument("--json-out", required=True)
     args = parser.parse_args()
 

@@ -2,13 +2,13 @@ import json
 from functools import cache
 from pathlib import Path
 
+import ml_dtypes  # noqa: F401  # registers the bfloat16 numpy dtype for rustler
 import numpy as np
 import torch
 from rustler import Sampler
 from torch.utils.data import Dataset
 
-# Preprocessed data lives alongside this package, under data/pre/<dataset>
-# (STEER's own self-contained layout).
+# Preprocessed data: data/pre/<dataset>.
 PRE_DIR = Path(__file__).resolve().parent / "data" / "pre"
 
 
@@ -42,8 +42,6 @@ class RelationalDataset(Dataset):
         tasks,
         batch_size,
         seq_len,
-        rank,
-        world_size,
         max_bfs_width,
         embedding_model,
         d_text,
@@ -52,9 +50,8 @@ class RelationalDataset(Dataset):
     ):
         dataset_tuples = []
         target_column_indices = []
-        drop_column_indices = []
 
-        for db_name, table_name, target_column, split, columns_to_drop in tasks:
+        for db_name, table_name, target_column, split in tasks:
             if split == "train":
                 split = "Train"
             elif split == "val":
@@ -77,25 +74,17 @@ class RelationalDataset(Dataset):
             target_idx = get_column_index(target_column, table_name, db_name)
             target_column_indices.append(target_idx)
 
-            drop_indices = [
-                get_column_index(col, table_name, db_name) for col in columns_to_drop
-            ]
-            drop_column_indices.append(drop_indices)
-
             dataset_tuples.append((db_name, node_idx_offset, num_nodes))
 
         self.sampler = Sampler(
             dataset_tuples=dataset_tuples,
             batch_size=batch_size,
             seq_len=seq_len,
-            rank=rank,
-            world_size=world_size,
             max_bfs_width=max_bfs_width,
             embedding_model=embedding_model,
             d_text=d_text,
             seed=seed,
             target_columns=target_column_indices,
-            columns_to_drop=drop_column_indices,
             sampler_config_paths=[sampler_config_path] * len(dataset_tuples),
         )
 

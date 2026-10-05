@@ -154,8 +154,7 @@ def _write_runtime_config(spec: RunSpec, task, config: TieredConfig, profile: Pr
             config, profile, toggle_mode, task.dataset, task.task_table, griffin_data_root, aliases
         )
         for w in warnings:
-            if not w.startswith("column_filter:"):  # the column filter does not apply to Griffin
-                print(f"Warning: {w}")
+            print(f"Warning: {w}")
     else:
         from .config.convert.to_rt_ids import convert
         model_dir = "rt" if spec.model == task_registry.MODEL_RT else "rtj"

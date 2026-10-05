@@ -1,16 +1,10 @@
-import json
-import os
 from functools import partial
-from pathlib import Path
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from einops import rearrange
 from einops._torch_specific import allow_ops_in_compiled_graph
-from ml_dtypes import bfloat16
 from torch import nn
-from torch.nn.attention import SDPBackend, sdpa_kernel
 from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 
 allow_ops_in_compiled_graph()
@@ -36,11 +30,7 @@ class MaskedAttention(nn.Module):
         k = rearrange(k, "b s (h d) -> b h s d", h=self.num_heads)
         v = rearrange(v, "b s (h d) -> b h s d", h=self.num_heads)
 
-        if block_mask is None:
-            with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
-                x = F.scaled_dot_product_attention(q, k, v)
-        else:
-            x = flex_attention(q, k, v, block_mask=block_mask)
+        x = flex_attention(q, k, v, block_mask=block_mask)
 
         x = rearrange(x, "b h s d -> b s (h d)")
         x = self.wo(x)
@@ -157,8 +147,6 @@ class RelationalTransformer(nn.Module):
         table_name_idxs = batch["table_name_idxs"]
         is_padding = batch["is_padding"]
         batch_size, seq_len = node_idxs.shape
-
-        batch_size, seq_len = node_idxs.shape
         device = node_idxs.device
 
         # Padding mask for attention pairs (allow only non-pad -> non-pad)
@@ -228,40 +216,8 @@ class RelationalTransformer(nn.Module):
 
         x = self.norm_out(x)
 
-        loss_out = x.new_zeros(())
-        yhat_out = {"number": None, "text": None, "datetime": None, "boolean": None}
+        yhat_out = {}
+        for t in ["number", "text", "datetime", "boolean"]:
+            yhat_out[t] = self.dec_dict[t](x)
 
-        B, S, _ = x.shape
-        sem_types = batch["sem_types"]  # (B,S) ints 0..3
-        masks = batch["masks"].bool()  # (B,S) where to train
-
-        for i, t in enumerate(["number", "text", "datetime", "boolean"]):
-            yhat = self.dec_dict[t](x)  # (B,S, D_t)
-            y = batch[f"{t}_values"]  # (B,S, D_y)
-            sem_type_mask = (sem_types == i) & masks  # (B,S) mask for this type
-
-            if not sem_type_mask.any():
-                if t in yhat_out:
-                    # still touch the param to avoid unused param error
-                    loss_out = loss_out + (yhat.sum() * 0.0)
-                    yhat_out[t] = yhat
-                continue
-
-            if t in ("number", "datetime"):
-                loss_t = F.huber_loss(yhat, y, reduction="none").mean(-1)
-            elif t == "boolean":
-                loss_t = F.binary_cross_entropy_with_logits(
-                    yhat, (y > 0).float(), reduction="none"
-                ).mean(-1)
-            elif t == "text":
-                raise ValueError("masking text not supported")
-
-            # masked sum for this type
-            loss_out = loss_out + (loss_t * sem_type_mask).sum()
-
-            if t in yhat_out:
-                yhat_out[t] = yhat
-
-        loss_out = loss_out / masks.sum()
-
-        return loss_out, yhat_out
+        return yhat_out

@@ -2,7 +2,7 @@
 name = "steer-rtj"
 requires-python = "==3.12"
 version = "0.1.0"
-description = "STEER's slimmed, inference-only copy of rt-j (the zero-shot foundation model)."
+description = "Inference-only copy of RT-J with STEER's sampler."
 
 [build-system]
 build-backend = "hatchling.build"
@@ -36,12 +36,8 @@ rust = "*"
 maturin = "*"
 
 [tool.pixi.tasks]
-# `maturin develop` hits a spurious "Permission denied" trying to invoke
-# rustc in this environment (same issue as RT's, see its pyproject.toml).
-# Workaround: build the wheel, then unzip just the compiled extension into
-# the editable rt/ package (module-name is nested as rt._rustler, so the
-# wheel bundles a second copy of every .py file too -- only the .so is
-# needed alongside the real source).
+# `maturin develop` can fail with "Permission denied" invoking rustc, so build
+# the wheel and unzip only the compiled extension into rt/.
 build-sampler = { cmd = """
 maturin build --release &&
 unzip -o -j rustler/target/wheels/steer_rtj-*.whl 'rt/_rustler.abi3.so' -d rt/ &&

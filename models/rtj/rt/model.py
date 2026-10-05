@@ -1,4 +1,3 @@
-import os
 from functools import partial
 
 import torch
@@ -43,11 +42,9 @@ class MaskedAttention(nn.Module):
         self.wk = nn.Linear(d_model, d_model, bias=False)
         self.wv = nn.Linear(d_model, d_model, bias=False)
         self.wo = nn.Linear(d_model, d_model, bias=False)
-        nn.init.zeros_(self.wo.weight)
 
         self.scale = nn.Parameter(torch.ones(1, num_heads, 1, 1))
         self.wg = nn.Linear(d_model, d_model, bias=False)
-        nn.init.zeros_(self.wg.weight)
 
     def forward(self, x, block_mask, kv_sizes):
         q = self.wq(x)
@@ -61,11 +58,7 @@ class MaskedAttention(nn.Module):
         q = self.q_norm(q)
         k = self.k_norm(k)
 
-        # clamp_min(1) so kv_size=0 (queries with all-masked keys) gives
-        # log(1)=0 instead of log(1e-6)=-13.8. flex_attention already
-        # zeros the output for fully-masked queries; this just removes
-        # the wrong-sign numerical hazard on q for those rows. Has no
-        # effect when kv_size >= 1.
+        # clamp_min(1): fully-masked queries get log(1)=0 instead of log(1e-6)
         q = (
             q
             * self.scale
@@ -97,7 +90,6 @@ class FFN(nn.Module):
         self.w1 = nn.Linear(d_model, d_ff, bias=False)
         self.w2 = nn.Linear(d_ff, d_model, bias=False)
         self.w3 = nn.Linear(d_model, d_ff, bias=False)
-        nn.init.zeros_(self.w2.weight)
 
     def forward(self, x):
         return self.w2(F.silu(self.w1(x)) * self.w3(x))
@@ -154,11 +146,7 @@ def _make_block_mask(mask, batch_size, q_seq_len, kv_seq_len, device):
 
 
 def _kv_sizes(node_idxs, f2p_nbr_idxs, col_name_idxs, table_name_idxs, is_padding):
-    # Exact per-query key counts for the three attention types, computed without
-    # ever materializing a (B, S, S) tensor. Peak memory is O(B*S*F).
-    #
-    # Strategy: per batch row, sort the relevant key tensors and look up counts
-    # via searchsorted (count of value v in sorted list = upper - lower bound).
+    # Exact per-query key counts via sort + searchsorted, without a (B, S, S) tensor.
     B, S = node_idxs.shape
     Fnbr = f2p_nbr_idxs.shape[-1]
     INT64_MAX = torch.iinfo(torch.int64).max
@@ -233,9 +221,6 @@ def _kv_sizes(node_idxs, f2p_nbr_idxs, col_name_idxs, table_name_idxs, is_paddin
     }
 
 
-SEM_TYPE_NAMES = ["number", "text", "datetime", "boolean"]
-
-
 class RelationalTransformer(nn.Module):
     def __init__(
         self,
@@ -244,7 +229,6 @@ class RelationalTransformer(nn.Module):
         d_text,
         num_heads,
         d_ff,
-        compile,
         materialize_attn_masks,
     ):
         super().__init__()
@@ -287,77 +271,29 @@ class RelationalTransformer(nn.Module):
         self.norm_out = RMSNorm(d_model, eps=1e-6)
         self.d_model = d_model
 
-        # zero-init output weights
-        for module in self.dec_dict.values():
-            nn.init.zeros_(module.weight)
-            nn.init.zeros_(module.bias)
-
-        if compile:
-            self.forward = torch.compile(self.forward, dynamic=False)
-
     @classmethod
-    def from_pretrained(
-        cls,
-        model_id_or_path,
-        *,
-        device: str = "cpu",
-        compile: bool = False,
-        revision: str | None = None,
-        subfolder: str | None = None,
-        **model_kwargs,
-    ):
-        """Load a pretrained RT model from a local path *or* the HuggingFace Hub.
-
-        ``model_id_or_path`` may be a Hub repo (``org/repo[/subdir]``), a local
-        checkpoint directory, or a local weights file; a sibling ``config.json``
-        supplies the model dims and the text-embedding model. A Hub reference is
-        downloaded and cached on demand; a local path is used as-is and never
-        triggers a download. ``subfolder`` selects a sub-directory within the
-        repo/directory (the HuggingFace-idiomatic way to pick one of several
-        checkpoints; equivalent to appending it to ``model_id_or_path``). Extra
-        keyword args fill/override model dims for checkpoints that ship without a
-        ``config.json``.
-
-        Returns the model, moved to ``device``, with its resolved ``config`` dict
-        attached as ``model.config``.
-
-            model = RelationalTransformer.from_pretrained("stanford-star/rt-j", subfolder="classification")
-            model = RelationalTransformer.from_pretrained("stanford-star/rt-j/classification")
-            model = RelationalTransformer.from_pretrained("/path/to/checkpoint")
-        """
+    def from_pretrained(cls, path, *, device: str = "cpu"):
+        """Load a checkpoint (weights file or directory with config.json); `config` is attached as `model.config`."""
         from rt.checkpoints import MODEL_DIM_KEYS, load_model, resolve_checkpoint
 
-        config, model_path = resolve_checkpoint(
-            model_id_or_path, revision=revision, subfolder=subfolder
-        )
-        m = {**config.get("model", {}), **model_kwargs}
+        config, model_path = resolve_checkpoint(path)
+        m = config.get("model", {})
         missing = [k for k in MODEL_DIM_KEYS if k not in m]
         if missing:
-            raise ValueError(
-                f"checkpoint {model_id_or_path!r} is missing model dims {missing}; "
-                f"provide a config.json or pass them as keyword args."
-            )
-        state_dict = load_model(model_path)
+            raise ValueError(f"checkpoint {path!r} is missing model dims {missing} in config.json")
         model = cls(
             num_blocks=m["num_blocks"],
             d_model=m["d_model"],
             d_text=m["d_text"],
             num_heads=m["num_heads"],
             d_ff=m["d_ff"],
-            compile=compile,
-            # materialized masks are O(ctx^2) memory; RT_MATERIALIZE_ATTN_MASKS=0
-            # forces the flex-attention path for long-ctx (>=16k) inference.
-            materialize_attn_masks=(
-                False
-                if os.environ.get("RT_MATERIALIZE_ATTN_MASKS", "") == "0"
-                else m.get("materialize_attn_masks", True)
-            ),
+            materialize_attn_masks=m.get("materialize_attn_masks", True),
         )
-        model.load_state_dict(state_dict)
+        model.load_state_dict(load_model(model_path))
         model.config = config
         return model.to(device)
 
-    def forward(self, batch, return_embeddings):
+    def forward(self, batch):
         node_idxs = batch["node_idxs"]
         f2p_nbr_idxs = batch["f2p_nbr_idxs"]
         col_name_idxs = batch["col_name_idxs"]
@@ -389,7 +325,7 @@ class RelationalTransformer(nn.Module):
             type_values[t] = batch[k].gather(1, si.expand_as(batch[k]))
 
         if self.materialize_attn_masks:
-            # Materialize (B, S, S) pairwise masks, then convert to block masks.
+            # (B, S, S) pairwise masks, converted to block masks.
             pad = (~is_padding[:, :, None]) & (~is_padding[:, None, :])
             same_node = node_idxs[:, :, None] == node_idxs[:, None, :]
             kv_in_f2p = (
@@ -426,9 +362,7 @@ class RelationalTransformer(nn.Module):
                 for attn_type, attn_mask in attn_masks.items()
             }
         else:
-            # Build sparse block masks via flex_attention's mask_mod path: closures index
-            # into per-token tensors directly. create_block_mask samples mask_mod at block
-            # granularity, never materializing a (B, S, S) tensor.
+            # Block masks via mask_mod closures, without materializing (B, S, S).
             node_idxs_c = node_idxs.contiguous()
             f2p_nbr_idxs_c = f2p_nbr_idxs.contiguous()
             col_name_idxs_c = col_name_idxs.contiguous()
@@ -469,7 +403,6 @@ class RelationalTransformer(nn.Module):
                 "col": make_bm(col_mask_mod),
             }
 
-            # Exact per-query key counts, computed analytically without (B, S, S).
             kv_sizes = _kv_sizes(
                 node_idxs_c,
                 f2p_nbr_idxs_c,
@@ -485,7 +418,7 @@ class RelationalTransformer(nn.Module):
         )
 
         for i, t in enumerate(["number", "text", "datetime", "boolean"]):
-            # fill in nan values with 0s # FIXME: check rustler (ctu only)
+            # missing values (NaN) become 0
             type_values[t] = torch.where(
                 torch.isnan(type_values[t]),
                 torch.zeros_like(type_values[t]),
@@ -501,71 +434,19 @@ class RelationalTransformer(nn.Module):
                 * ((sem_types == i) & is_targets & ~is_padding)[..., None]
             )
 
-        for i, block in enumerate(self.blocks):
+        for block in self.blocks:
             x = block(x, block_masks, kv_sizes)
 
         x = self.norm_out(x)
 
-        if return_embeddings:
-            return x
+        # Only the "number" head is read out (booleans are folded into numbers upstream).
+        yhat = self.dec_dict["number"](x).squeeze(-1)  # (B, S)
+        return yhat, is_targets
 
-        yhat_out = {"number": None, "text": None, "datetime": None, "boolean": None}
+    def predict(self, batch, device):
+        """Per-row predictions (B,) on CPU: the "number" head at each row's target cell.
 
-        B, S, _ = x.shape
-        masks = is_targets.bool()  # (B,S) where to train
-
-        loss_per_seq = x.new_zeros(B)
-        sem_type_names = ["number", "text", "datetime", "boolean"]
-        sem_type_losses = {}
-
-        for i, t in enumerate(sem_type_names):
-            yhat = self.dec_dict[t](x)  # (B,S, D_t)
-            y = type_values[t]  # (B,S, D_y)
-            sem_type_mask = (sem_types == i) & masks  # (B,S) mask for this type
-
-            if t in ("number", "text", "datetime"):
-                loss_t = F.huber_loss(yhat, y, reduction="none").mean(-1)  # (B, S)
-            elif t == "boolean":
-                loss_t = F.binary_cross_entropy_with_logits(
-                    yhat, (y > 0).float(), reduction="none"
-                ).mean(-1)  # (B, S)
-
-            # Per-sem_type average loss (clamp avoids 0/0 when type is absent)
-            n_tokens = sem_type_mask.sum()
-            sem_type_losses[t] = (loss_t * sem_type_mask).sum() / n_tokens.clamp(min=1)
-
-            # Sum loss per sequence for this type
-            loss_per_seq = loss_per_seq + (loss_t * sem_type_mask).sum(dim=1)  # (B,)
-
-            yhat_out[t] = yhat
-
-        # Normalize by number of masks per sequence, then average across sequences
-        masks_per_seq = masks.sum(dim=1).float()  # (B,)
-        loss_per_seq = loss_per_seq / masks_per_seq  # (B,)
-        loss_out = loss_per_seq.mean()  # scalar
-
-        return loss_out, yhat_out, sem_type_losses, is_targets
-
-    def predict(self, batch, eval_ctx_sizes, device, task, bool_as_num):
-        """Eval-mode predictions at multiple context sizes.
-
-        batch: dict of CPU tensors (B, S_max).
-        Returns dict mapping ctx_size → (B,) prediction tensor (CPU), with
-        one entry per batch row. Rows with no target (phantom rows from
-        last-batch overshoot, batch_mask=false) get 0.0; the caller filters
-        them out using batch_mask after gather.
+        Phantom rows (no target) get 0.0; the caller filters them with batch_mask.
         """
-        val_key = "boolean" if task.task_type == "clf" and not bool_as_num else "number"
-        preds = {}
-        for ctx_size in eval_ctx_sizes:
-            trunc = {
-                k: v[:, :ctx_size].to(device, non_blocking=True)
-                for k, v in batch.items()
-            }
-            _, yhat_dict, _, sorted_is_targets = self(trunc, return_embeddings=False)
-            # Each real row has exactly one target position (eval invariant).
-            # Collapse (B, S, 1) → (B,) by summing the per-row target entry.
-            # Phantom rows have no target → sum is 0, filtered by batch_mask.
-            yhat = yhat_dict[val_key].squeeze(-1)  # (B, S)
-            preds[ctx_size] = (yhat * sorted_is_targets.to(yhat.dtype)).sum(dim=1).cpu()
-        return preds
+        yhat, is_targets = self({k: v.to(device, non_blocking=True) for k, v in batch.items()})
+        return (yhat * is_targets.to(yhat.dtype)).sum(dim=1).cpu()

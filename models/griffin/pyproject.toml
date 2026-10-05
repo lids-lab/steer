@@ -2,7 +2,7 @@
 name = "steer-griffin"
 requires-python = ">=3.11"
 version = "0.1.0"
-description = "STEER's slimmed, inference-only copy of the from-scratch Griffin rebuild."
+description = "STEER's inference-only copy of Griffin."
 
 [build-system]
 build-backend = "hatchling.build"
@@ -22,8 +22,6 @@ safetensors = "*"
 scikit-learn = "*"
 numpy = "*"
 pyyaml = "*"
-matplotlib = "*"
-seaborn = "*"
 
 [tool.pixi.dependencies]
 python = "3.12.*"

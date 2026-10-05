@@ -1,5 +1,4 @@
-"""The Task representation rt-j's sampler and dataloader consume. STEER builds
-these from its own task registry (steer/tasks.py)."""
+"""The task description the sampler and dataloader consume (built by STEER's task registry)."""
 
 from __future__ import annotations
 
@@ -13,4 +12,3 @@ class Task:
     target_column: str
     task_type: str  # "clf" | "reg"
     split: str = ""  # "train" | "val" | "test"
-    leakage_columns: tuple[str, ...] = ()

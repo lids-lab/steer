@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""RT's clean inference entry point. Takes primitive args only (no STEER
-registry knowledge), runs one task's test-split evaluation, writes one
-structured JSON result. No env vars, no stdout scraping needed by the
-caller -- this script owns its own inputs and output.
-"""
+"""Evaluate one task with RT and write the result as JSON."""
 
 from __future__ import annotations
 
@@ -45,7 +41,7 @@ def main() -> None:
     net = load_checkpoint(args.checkpoint, NUM_BLOCKS, D_MODEL, D_TEXT, NUM_HEADS, D_FF, args.device)
 
     eval_tasks = [
-        (args.dataset, args.task_table, args.target_column, args.split, [], args.task_type),
+        (args.dataset, args.task_table, args.target_column, args.split, args.task_type),
     ]
     results = evaluate_checkpoint(
         net,

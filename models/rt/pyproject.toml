@@ -19,17 +19,12 @@ scikit-learn = "<1.6.0"
 ml_dtypes = "*"
 
 [tool.pixi.dependencies]
-# Pinned to match the version the vendored Cargo.lock's dependency tree
-# (e.g. ethnum 1.5.0) actually compiles under -- a newer rustc rejects one
-# of its unsafe transmutes that used to be accepted.
+# Pinned: newer rustc rejects an unsafe transmute in a Cargo.lock dependency.
 rust = "1.87.*"
 maturin = "*"
 
 [tool.pixi.tasks]
-# `maturin develop` hits a spurious "Permission denied" trying to invoke
-# rustc in this environment (root cause not identified; plain `cargo`/
-# `rustc` work fine). Workaround: build the wheel, then unzip just the
-# compiled extension into site-packages by hand.
+# Build the wheel and unzip it into site-packages (`maturin develop` fails to invoke rustc here).
 build-sampler = { cmd = """
 cd rustler && maturin build --release && cd .. &&
 SITE_PACKAGES=$(python -c 'import site; print(site.getsitepackages()[0])') &&

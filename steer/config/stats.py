@@ -1,9 +1,4 @@
-"""Per-column null-rate stats, used by correct.py's demotion rule.
-
-Only null_rate is needed for the current approach (mode_concentration,
-cardinality_ratio, and FK fanout/parent-coverage were only ever consumed by
-corrections that aren't part of the approach anymore).
-"""
+"""Per-column null rates, used by correct.py to demote mostly-null columns."""
 
 from __future__ import annotations
 

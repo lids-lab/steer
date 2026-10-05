@@ -14,9 +14,7 @@ from .providers.base import Provider
 from .schema import APPROACHES as _CONFIG_APPROACHES  # column_filter, p2f_edge, f2p_edge
 from .schema import TieredConfig
 
-# The approach names as used in the LLM prompt/output (edge approaches carry
-# the sampler's own toggle-key suffix in their prompt identity, matching
-# what generate_policy_config.py has emitted since run 016).
+# Approach names as they appear in the prompt (edge approaches use the sampler's toggle key).
 _PROMPT_APPROACH_KEY = {
     "column_filter": "column_filter",
     "p2f_edge": "p2f_edge_probabilistic_at_push",
@@ -25,18 +23,8 @@ _PROMPT_APPROACH_KEY = {
 
 _TIERS = ("very_strong", "strong", "moderate", "weak")
 
-# Columns present in every model's actual preprocessed runtime data (RT,
-# rt-j, and Griffin all retain them) that the currently-installed live
-# relbench no longer exposes via get_db() -- confirmed against
-# stanford-star/relbench-v2-extra commit 2d0c6d19 ("rel-ratebeer: drop
-# NaN/leakage/artifact columns (#373)"). Several of these (the per-user/
-# per-beer/per-place lifetime aggregates) are flagged by that issue as
-# temporally leaky -- computed without a time cutoff. They are restored
-# here rather than stripped: the runtime checkpoints were trained on data
-# that always included them, so hiding them from the LLM doesn't remove
-# the leakage the model already relies on, it only stops the sampler from
-# being able to choose to keep them. Restoring them lets the LLM reason
-# over the same schema the model actually sees at inference time.
+# rel-ratebeer columns that the models' preprocessed data keep but current RelBench's
+# get_db() no longer exposes; added back so the LLM sees the schema the model sees.
 _SCHEMA_ADDITIONS: dict[str, dict[str, list[str]]] = {
     "rel-ratebeer": {
         "beer_ratings": ["updated_at"],
@@ -388,11 +376,7 @@ def _validate_edge_section(section: Any, prompt_approach: str, tables: dict[str,
 
 
 def _strip_markdown_fence(text: str) -> str:
-    """Defensive only -- the prompt already asks for no markdown, and every
-    reasoning_effort='high' generation run to date has complied. Without high
-    reasoning effort, instruction-following on output format got noticeably
-    less reliable (some responses come back fenced), so this protects that
-    case without changing behavior when the model already returns bare JSON."""
+    """Strip a ```json fence, in case the model adds one despite the prompt."""
     text = text.strip()
     if text.startswith("```"):
         text = text[3:]
@@ -422,15 +406,7 @@ def generate_config(
     approaches: tuple[str, ...] = _CONFIG_APPROACHES,
     existing_config: TieredConfig | None = None,
 ) -> TieredConfig:
-    """One LLM call per approach in `approaches`, validated, merged into a TieredConfig.
-
-    `approaches` narrows which sections actually get a fresh LLM call -- e.g.
-    `("column_filter",)` to update only that section. Any approach left out
-    is instead carried over unchanged from `existing_config` (required in
-    that case). Not meant as a general per-approach regeneration mode --
-    used specifically when re-running the LLM for one approach only, without
-    disturbing already-tuned edge tiers for the others.
-    """
+    """One LLM call per approach in `approaches`; the rest are carried over from `existing_config`."""
     tables = _allowed_tables(task_input)
     sections: dict[str, dict[str, list[str]]] = {}
 

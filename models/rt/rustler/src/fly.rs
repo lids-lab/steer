@@ -1,7 +1,6 @@
 use crate::common::{
     ArchivedAdj, ArchivedEdge, ArchivedNode, ArchivedOffsets, ArchivedTableType, Offsets,
 };
-use clap::Parser;
 use half::bf16;
 use itertools::izip;
 use memmap2::Mmap;
@@ -22,16 +21,10 @@ use std::fs;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use std::str;
-use std::time::Instant;
 
 const MAX_F2P_NBRS: usize = 5;
 
-// keep-probabilities are now config-driven (SamplerProbabilities, below)
-// instead of compile-time constants -- these are only the *defaults* used
-// when a task config doesn't specify keep_probabilities at all (old configs,
-// or STEER's baseline runs), so behavior is unchanged for anyone not opting
-// into the new field.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 struct TierProbs {
     #[serde(default)]
     very_strong: f32,
@@ -43,34 +36,14 @@ struct TierProbs {
     weak: f32,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 struct SamplerProbabilities {
-    #[serde(default = "default_column_filter_probs")]
+    #[serde(default)]
     column_filter: TierProbs,
-    #[serde(default = "default_p2f_edge_probs")]
+    #[serde(default)]
     p2f_edge: TierProbs,
-    #[serde(default = "default_f2p_edge_probs")]
+    #[serde(default)]
     f2p_edge: TierProbs,
-}
-
-fn default_column_filter_probs() -> TierProbs {
-    TierProbs { very_strong: 1.0, strong: 1.0, moderate: 0.2, weak: 0.0 }
-}
-fn default_p2f_edge_probs() -> TierProbs {
-    TierProbs { very_strong: 1.0, strong: 0.6, moderate: 0.0, weak: 0.0 }
-}
-fn default_f2p_edge_probs() -> TierProbs {
-    TierProbs { very_strong: 1.0, strong: 1.0, moderate: 0.0, weak: 0.0 }
-}
-
-impl Default for SamplerProbabilities {
-    fn default() -> Self {
-        Self {
-            column_filter: default_column_filter_probs(),
-            p2f_edge: default_p2f_edge_probs(),
-            f2p_edge: default_f2p_edge_probs(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -95,7 +68,7 @@ struct SamplerColumnFilterConfig {
     weak: Vec<i32>,
 }
 
-// Edges stored as "src_table_id->dst_table_id" strings after conversion.
+// Edges are "src_table_id->dst_table_id" strings.
 #[derive(Clone, Debug, Default, Deserialize)]
 struct SamplerEdgeTieredConfig {
     #[serde(default)]
@@ -183,7 +156,6 @@ struct Slices<'a> {
     is_task_nodes: &'a mut [bool],
     is_padding: &'a mut [bool],
 }
-// Vecs::new(self.batch_size, self.seq_len, true_batch_size, self.d_text);
 impl Vecs {
     fn new(batch_size: usize, seq_len: usize, true_batch_size: usize, d_text: usize) -> Self {
         let l = batch_size * seq_len;
@@ -346,8 +318,6 @@ struct Item {
 pub struct Sampler {
     batch_size: usize,
     seq_len: usize,
-    rank: usize,
-    world_size: usize,
     datasets: Vec<Dataset>,
     items: Vec<Item>,
     max_bfs_width: usize,
@@ -355,7 +325,6 @@ pub struct Sampler {
     d_text: usize,
     seed: u64,
     target_columns: Vec<i32>,
-    columns_to_drop: Vec<Vec<i32>>,
     task_configs: Vec<ResolvedSamplerTaskConfig>,
 }
 
@@ -367,22 +336,18 @@ impl Sampler {
         dataset_tuples: Vec<(String, i32, i32)>,
         batch_size: usize,
         seq_len: usize,
-        rank: usize,
-        world_size: usize,
         max_bfs_width: usize,
         embedding_model: &str,
         d_text: usize,
         seed: u64,
         target_columns: Vec<i32>,
-        columns_to_drop: Vec<Vec<i32>>,
         sampler_config_paths: Vec<Option<String>>,
     ) -> Self {
         let mut datasets = Vec::new();
         let mut items = Vec::new();
         let mut task_configs = Vec::new();
         for (i, (db_name, node_idx_offset, num_nodes)) in dataset_tuples.into_iter().enumerate() {
-            // Preprocessed data lives alongside this crate, under models/rt/data/pre/<dataset>
-            // (STEER's own self-contained layout -- not relational-transformer's).
+            // Preprocessed data: <crate parent>/data/pre/<dataset>.
             let pre_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .parent()
                 .unwrap()
@@ -437,8 +402,6 @@ impl Sampler {
         Self {
             batch_size,
             seq_len,
-            rank,
-            world_size,
             datasets,
             items,
             max_bfs_width,
@@ -446,7 +409,6 @@ impl Sampler {
             d_text,
             seed,
             target_columns,
-            columns_to_drop,
             task_configs,
         }
     }
@@ -466,10 +428,7 @@ impl Sampler {
     }
 }
 
-// STEER always knows exactly which config file a given run needs (it's
-// resolved by the Python side from its own task registry), so this takes
-// the path directly -- no SAMPLER_CONFIG_DIR env var, no per-(db_name,
-// target_col_idx) filename lookup table.
+// Loads the STEER sampler config; no path means all filters off.
 fn load_task_config(config_path: Option<&str>) -> SamplerTaskConfig {
     let Some(config_path) = config_path else {
         return SamplerTaskConfig::default();
@@ -614,14 +573,13 @@ fn f2p_edge_probabilistic_at_push_keep_probability(
 
 impl Sampler {
     fn len(&self) -> usize {
-        self.items.len().div_ceil(self.batch_size * self.world_size)
+        self.items.len().div_ceil(self.batch_size)
     }
 
     fn batch(&self, batch_idx: usize) -> Vecs {
         let true_batch_size = self.batch_size.min(
             self.items.len()
-                - self.rank * self.batch_size
-                - batch_idx * self.batch_size * self.world_size,
+                - batch_idx * self.batch_size,
         );
 
         let mut vecs = Vecs::new(self.batch_size, self.seq_len, true_batch_size, self.d_text);
@@ -629,7 +587,7 @@ impl Sampler {
             .enumerate()
             .for_each(|(i, mut slices)| {
                 let j =
-                    batch_idx * self.batch_size * self.world_size + self.rank * self.batch_size + i;
+                    batch_idx * self.batch_size + i;
                 // when self.batch_size > true_batch_size, this will wrap around
                 let j = j % self.items.len();
                 let item = &self.items[j];
@@ -643,7 +601,6 @@ impl Sampler {
     fn seq(&self, item: &Item, slices: &mut Slices<'_>, task_config: &ResolvedSamplerTaskConfig) -> usize {
         let dataset = &self.datasets[item.dataset_idx as usize];
         let target_column = self.target_columns[item.dataset_idx as usize];
-        let columns_to_drop = &self.columns_to_drop[item.dataset_idx as usize];
         let seed_node_idx = item.node_idx;
 
         let mut visited = vec![false; dataset.offsets.len() - 1];
@@ -694,6 +651,7 @@ impl Sampler {
                 let table_idx: i32 = parent_node.table_name_idx.into();
                 let is_task_table = parent_node.table_name_idx == seed_node.table_name_idx;
 
+                // STEER: f2p push gate; keep the edge with its tier's probability.
                 if task_config.toggles.f2p_edge_probabilistic_at_push {
                     let src_table_idx: i32 = node.table_name_idx.into();
                     let src_is_task_table = node.table_name_idx == seed_node.table_name_idx;
@@ -739,6 +697,7 @@ impl Sampler {
                 }
 
                 let child_node_idx: i32 = edge.node_idx.into();
+                // STEER: p2f push gate (task-table edges; always keeps, but consumes a coin).
                 if task_config.toggles.p2f_edge_probabilistic_at_push {
                     let src_table_idx: i32 = node.table_name_idx.into();
                     let keep_prob = p2f_edge_probabilistic_at_push_keep_probability(
@@ -759,25 +718,16 @@ impl Sampler {
                 p2f_ftr[depth + 1].push(child_node_idx);
             }
 
-            // println!(
-            //     "[STEP {} EXPAND] node_idx={} p2f_edges_total={} db_p2f_candidates={} f2p_len_now={}",
-            //     step, node_idx, p2f_edges.len(), db_p2f_ftr.len(), f2p_ftr.len()
-            // );
-
             let sampled_db_idxs = if db_p2f_ftr.len() > self.max_bfs_width {
                 index::sample(&mut rng, db_p2f_ftr.len(), self.max_bfs_width).into_vec()
             } else {
                 (0..db_p2f_ftr.len()).collect::<Vec<_>>()
             };
 
-            // println!(
-            //     "[STEP {} DB SAMPLE] kept_db_edges={} max_bfs_width={}",
-            //     step, sampled_db_idxs.len(), self.max_bfs_width
-            // );
-
             for idx in sampled_db_idxs {
                 let child_node_idx = db_p2f_ftr[idx].0;
                 let child_table_idx = db_p2f_ftr[idx].1;
+                // STEER: p2f push gate; keep the sampled db edge with its tier's probability.
                 if task_config.toggles.p2f_edge_probabilistic_at_push {
                     let src_table_idx: i32 = node.table_name_idx.into();
                     let keep_prob = p2f_edge_probabilistic_at_push_keep_probability(
@@ -805,12 +755,7 @@ impl Sampler {
                     seed_node_idx == node.node_idx && node.col_name_idxs[cell_i] == target_column;
                 let is_task_table = node.table_name_idx == seed_node.table_name_idx;
 
-                if (node.node_idx == seed_node_idx && columns_to_drop.contains(&col_idx))
-                    || (node.timestamp == seed_node.timestamp && columns_to_drop.contains(&col_idx))
-                {
-                    continue; // do not add this cell to the sequence
-                }
-
+                // STEER: column-filter gate; keep the cell with its column tier's probability.
                 if task_config.toggles.column_filter {
                     let keep_prob = column_filter_keep_probability(col_idx, is_target, is_task_table, task_config);
                     if keep_prob <= 0.0 || coin_rng_column_filter.random::<f32>() > keep_prob {
@@ -873,7 +818,6 @@ fn get_node(dataset: &Dataset, idx: i32) -> &ArchivedNode {
     let l = dataset.offsets[idx as usize] as usize;
     let r = dataset.offsets[(idx + 1) as usize] as usize;
     let bytes = &dataset.mmap[l..r];
-    // rkyv::access::<ArchivedNode, Error>(bytes).unwrap()
     unsafe { rkyv::access_unchecked::<ArchivedNode>(bytes) }
 }
 
@@ -887,50 +831,4 @@ fn get_text_emb(dataset: &Dataset, idx: i32, d_text: usize) -> &[bf16] {
     let (pref, text_emb, suf) = unsafe { dataset.text_mmap.align_to::<bf16>() };
     assert!(pref.is_empty() && suf.is_empty());
     &text_emb[(idx as usize) * d_text..(idx as usize + 1) * d_text]
-}
-
-#[derive(Parser)]
-pub struct Cli {
-    #[arg(default_value = "rel-f1")]
-    db_name: String,
-    #[arg(default_value = "128")]
-    batch_size: usize,
-    #[arg(default_value = "1024")]
-    seq_len: usize,
-    #[arg(default_value = "1000")]
-    num_trials: usize,
-}
-
-pub fn main(cli: Cli) {
-    let tic = Instant::now();
-    let sampler = Sampler::new(
-        vec![(cli.db_name, 0, 10)], // dataset_tuples
-        cli.batch_size,             // batch_size
-        cli.seq_len,                // seq_len
-        0,                          // rank
-        1,                          // world_size
-        256,                        // max_bfs_width
-        "all-MiniLM-L12-v2",        // embedding_model
-        384,                        // d_text
-        0,                          // seed
-        vec![-1; 1],                // target_columns
-        vec![Vec::<i32>::new()],    // columns_to_drop
-        vec![None],                 // sampler_config_paths
-    );
-    println!("Sampler loaded in {:?}", tic.elapsed());
-
-    let mut sum = 0;
-    let mut sum_sq = 0;
-    let mut rng = rand::rng();
-    for _ in 0..cli.num_trials {
-        let tic = Instant::now();
-        let batch_idx = rng.random_range(0..sampler.len());
-        let _batch = sampler.batch(batch_idx);
-        let elapsed = tic.elapsed().as_millis();
-        sum += elapsed;
-        sum_sq += elapsed * elapsed;
-    }
-    let mean = sum as f64 / cli.num_trials as f64;
-    let std = (sum_sq as f64 / cli.num_trials as f64 - mean * mean).sqrt();
-    println!("Mean: {} ms,\tStd: {} ms", mean, std);
 }
