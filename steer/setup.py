@@ -18,7 +18,7 @@ from . import tasks as task_registry
 HF_NAMESPACE = "abdallam1007"
 
 # Approximate download size of everything for a model, in GB (checkpoints + data).
-APPROX_ALL_GB = {task_registry.MODEL_RT: 160, task_registry.MODEL_RTJ: 20, task_registry.MODEL_GRIFFIN: 140}
+APPROX_ALL_GB = {task_registry.MODEL_RT: 216, task_registry.MODEL_RTJ: 129, task_registry.MODEL_GRIFFIN: 158}
 
 _CKPT_BASES = {
     task_registry.MODEL_RT: task_registry.RT_CKPT_BASE,

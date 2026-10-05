@@ -40,7 +40,7 @@ Checkpoints and preprocessed data are hosted on Hugging Face under
 
 ```bash
 pixi run steer setup rt --task rel_f1_driver_dnf      # small: rel-f1 is about 15 MB
-pixi run steer setup rt --all                         # everything for RT (large)
+pixi run steer setup rt --all                         # everything for RT (about 216 GB)
 ```
 
 Files shared between tasks (a dataset, an RT database checkpoint, RT-J's two
