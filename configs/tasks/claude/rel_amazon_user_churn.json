@@ -1,0 +1,43 @@
+{
+  "column_filter": {
+    "moderate": [
+      "review.review_text",
+      "review.summary",
+      "product.price"
+    ],
+    "strong": [
+      "review.rating"
+    ],
+    "very_strong": [
+      "review.review_time",
+      "customer.customer_name"
+    ],
+    "weak": [
+      "review.verified",
+      "product.category",
+      "product.brand",
+      "product.title",
+      "product.description"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "review->product:product_id"
+    ],
+    "strong": [],
+    "very_strong": [
+      "review->customer:customer_id"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [],
+    "strong": [],
+    "very_strong": [
+      "customer->review:customer_id"
+    ],
+    "weak": [
+      "product->review:product_id"
+    ]
+  }
+}

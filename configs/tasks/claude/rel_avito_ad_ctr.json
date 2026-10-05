@@ -1,0 +1,80 @@
+{
+  "column_filter": {
+    "moderate": [
+      "AdsInfo.Title",
+      "AdsInfo.IsContext",
+      "PhoneRequestsStream.PhoneRequestDate",
+      "SearchInfo.SearchDate",
+      "SearchInfo.SearchQuery",
+      "SearchStream.ObjectType",
+      "SearchStream.SearchDate"
+    ],
+    "strong": [
+      "AdsInfo.Price"
+    ],
+    "very_strong": [
+      "SearchStream.Position",
+      "SearchStream.HistCTR",
+      "SearchStream.IsClick"
+    ],
+    "weak": [
+      "Category.Level",
+      "Category.ParentCategoryID",
+      "Category.SubcategoryID",
+      "Location.Level",
+      "Location.RegionID",
+      "Location.CityID",
+      "PhoneRequestsStream.IPID",
+      "SearchInfo.IPID",
+      "SearchInfo.IsUserLoggedOn",
+      "UserInfo.UserAgentID",
+      "UserInfo.UserAgentOSID",
+      "UserInfo.UserDeviceID",
+      "UserInfo.UserAgentFamilyID",
+      "VisitStream.IPID",
+      "VisitStream.ViewDate"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "SearchInfo->Category:CategoryID",
+      "SearchInfo->Location:LocationID",
+      "SearchInfo->UserInfo:UserID"
+    ],
+    "strong": [
+      "AdsInfo->Category:CategoryID",
+      "AdsInfo->Location:LocationID",
+      "SearchStream->SearchInfo:SearchID"
+    ],
+    "very_strong": [
+      "SearchStream->AdsInfo:AdID",
+      "VisitStream->AdsInfo:AdID",
+      "PhoneRequestsStream->AdsInfo:AdID"
+    ],
+    "weak": [
+      "PhoneRequestsStream->UserInfo:UserID",
+      "VisitStream->UserInfo:UserID"
+    ]
+  },
+  "p2f_edge": {
+    "moderate": [
+      "Category->AdsInfo:CategoryID",
+      "Location->AdsInfo:LocationID",
+      "SearchInfo->SearchStream:SearchID"
+    ],
+    "strong": [
+      "AdsInfo->VisitStream:AdID",
+      "AdsInfo->PhoneRequestsStream:AdID"
+    ],
+    "very_strong": [
+      "AdsInfo->SearchStream:AdID"
+    ],
+    "weak": [
+      "UserInfo->PhoneRequestsStream:UserID",
+      "Category->SearchInfo:CategoryID",
+      "Location->SearchInfo:LocationID",
+      "UserInfo->SearchInfo:UserID",
+      "UserInfo->VisitStream:UserID"
+    ]
+  }
+}

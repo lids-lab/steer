@@ -1,0 +1,101 @@
+{
+  "column_filter": {
+    "moderate": [
+      "circuits.circuitRef",
+      "circuits.name",
+      "circuits.country",
+      "circuits.alt",
+      "constructor_results.points",
+      "constructor_standings.points",
+      "constructor_standings.position",
+      "constructor_standings.wins",
+      "constructors.constructorRef",
+      "constructors.name",
+      "constructors.nationality",
+      "drivers.dob",
+      "qualifying.position",
+      "races.year",
+      "races.round",
+      "races.name",
+      "results.number",
+      "results.grid",
+      "results.points",
+      "results.fastestLap",
+      "results.rank",
+      "standings.points",
+      "standings.position",
+      "standings.wins"
+    ],
+    "strong": [
+      "results.laps",
+      "results.milliseconds",
+      "results.position",
+      "results.positionOrder",
+      "drivers.driverRef",
+      "drivers.code",
+      "drivers.forename",
+      "drivers.surname"
+    ],
+    "very_strong": [
+      "results.statusId"
+    ],
+    "weak": [
+      "circuits.location",
+      "circuits.lat",
+      "circuits.lng",
+      "constructor_results.date",
+      "constructor_standings.date",
+      "qualifying.number",
+      "qualifying.date",
+      "drivers.nationality",
+      "races.date",
+      "races.time",
+      "results.date",
+      "standings.date"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "results->drivers:driverId",
+      "qualifying->drivers:driverId",
+      "standings->drivers:driverId",
+      "results->constructors:constructorId",
+      "qualifying->constructors:constructorId",
+      "constructor_results->constructors:constructorId",
+      "constructor_standings->constructors:constructorId"
+    ],
+    "strong": [
+      "results->races:raceId",
+      "qualifying->races:raceId",
+      "standings->races:raceId",
+      "constructor_results->races:raceId",
+      "constructor_standings->races:raceId"
+    ],
+    "very_strong": [
+      "races->circuits:circuitId"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [
+      "constructors->constructor_results:constructorId",
+      "constructors->constructor_standings:constructorId",
+      "constructors->qualifying:constructorId",
+      "races->constructor_results:raceId",
+      "races->constructor_standings:raceId",
+      "races->standings:raceId",
+      "circuits->races:circuitId"
+    ],
+    "strong": [
+      "drivers->qualifying:driverId",
+      "drivers->standings:driverId",
+      "constructors->results:constructorId",
+      "races->results:raceId",
+      "races->qualifying:raceId"
+    ],
+    "very_strong": [
+      "drivers->results:driverId"
+    ],
+    "weak": []
+  }
+}

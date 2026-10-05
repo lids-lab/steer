@@ -1,0 +1,86 @@
+{
+  "column_filter": {
+    "moderate": [
+      "comments.Text",
+      "comments.CreationDate",
+      "postHistory.PostHistoryTypeId",
+      "postHistory.Text",
+      "postHistory.CreationDate",
+      "postLinks.LinkTypeId",
+      "postLinks.CreationDate"
+    ],
+    "strong": [
+      "posts.Title",
+      "posts.Tags",
+      "posts.Body",
+      "posts.CreationDate"
+    ],
+    "very_strong": [
+      "posts.PostTypeId",
+      "votes.VoteTypeId",
+      "votes.CreationDate"
+    ],
+    "weak": [
+      "posts.OwnerDisplayName",
+      "posts.ContentLicense",
+      "comments.ContentLicense",
+      "comments.UserDisplayName",
+      "postHistory.Comment",
+      "postHistory.UserDisplayName",
+      "postHistory.ContentLicense",
+      "postHistory.RevisionGUID",
+      "badges.Class",
+      "badges.Name",
+      "badges.TagBased",
+      "badges.Date",
+      "users.DisplayName",
+      "users.Location",
+      "users.WebsiteUrl",
+      "users.AboutMe",
+      "users.CreationDate",
+      "users.AccountId"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "postLinks->posts:PostId",
+      "postLinks->posts:RelatedPostId"
+    ],
+    "strong": [
+      "comments->posts:PostId",
+      "postHistory->posts:PostId",
+      "posts->users:OwnerUserId",
+      "posts->posts:ParentId"
+    ],
+    "very_strong": [
+      "votes->posts:PostId"
+    ],
+    "weak": [
+      "votes->users:UserId",
+      "comments->users:UserId",
+      "postHistory->users:UserId",
+      "badges->users:UserId"
+    ]
+  },
+  "p2f_edge": {
+    "moderate": [
+      "posts->postHistory:PostId",
+      "posts->postLinks:RelatedPostId",
+      "users->posts:OwnerUserId"
+    ],
+    "strong": [
+      "posts->comments:PostId",
+      "posts->posts:ParentId"
+    ],
+    "very_strong": [
+      "posts->votes:PostId"
+    ],
+    "weak": [
+      "posts->postLinks:PostId",
+      "users->badges:UserId",
+      "users->comments:UserId",
+      "users->postHistory:UserId",
+      "users->votes:UserId"
+    ]
+  }
+}

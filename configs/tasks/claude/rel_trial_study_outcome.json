@@ -1,0 +1,168 @@
+{
+  "column_filter": {
+    "moderate": [
+      "designs.observational_model",
+      "designs.time_perspective",
+      "designs.masking_description",
+      "designs.intervention_model_description",
+      "designs.subject_masked",
+      "designs.caregiver_masked",
+      "designs.investigator_masked",
+      "designs.outcomes_assessor_masked",
+      "drop_withdrawals.period",
+      "drop_withdrawals.reason",
+      "drop_withdrawals.count",
+      "eligibilities.gender",
+      "eligibilities.minimum_age",
+      "eligibilities.maximum_age",
+      "eligibilities.healthy_volunteers",
+      "eligibilities.population",
+      "eligibilities.criteria",
+      "facilities.country",
+      "outcome_analyses.non_inferiority_type",
+      "outcome_analyses.param_type",
+      "outcome_analyses.dispersion_type",
+      "outcome_analyses.p_value_modifier",
+      "outcome_analyses.p_value_description",
+      "outcome_analyses.method",
+      "outcomes.title",
+      "outcomes.description",
+      "outcomes.time_frame",
+      "outcomes.population",
+      "outcomes.dispersion_type",
+      "outcomes.param_type",
+      "reported_event_totals.subjects_at_risk",
+      "sponsors.agency_class",
+      "sponsors_studies.lead_or_collaborator",
+      "studies.target_duration",
+      "studies.baseline_population",
+      "studies.brief_title",
+      "studies.official_title",
+      "studies.enrollment_type",
+      "studies.number_of_arms",
+      "studies.number_of_groups",
+      "studies.has_dmc",
+      "studies.is_fda_regulated_drug",
+      "studies.is_fda_regulated_device",
+      "studies.is_unapproved_device",
+      "studies.source_class",
+      "studies.fdaaa801_violation",
+      "studies.detailed_descriptions",
+      "studies.brief_summaries",
+      "outcome_analyses.dispersion_value"
+    ],
+    "strong": [
+      "conditions.mesh_term",
+      "interventions.mesh_term",
+      "designs.allocation",
+      "designs.intervention_model",
+      "designs.primary_purpose",
+      "designs.masking",
+      "outcome_analyses.ci_lower_limit",
+      "outcome_analyses.ci_upper_limit",
+      "outcomes.outcome_type",
+      "reported_event_totals.event_type",
+      "reported_event_totals.classification",
+      "reported_event_totals.subjects_affected",
+      "studies.study_type",
+      "studies.enrollment"
+    ],
+    "very_strong": [
+      "outcome_analyses.param_value",
+      "outcome_analyses.p_value",
+      "studies.phase"
+    ],
+    "weak": [
+      "conditions_studies.date",
+      "designs.date",
+      "drop_withdrawals.date",
+      "eligibilities.sampling_method",
+      "eligibilities.gender_description",
+      "eligibilities.gender_based",
+      "eligibilities.adult",
+      "eligibilities.child",
+      "eligibilities.older_adult",
+      "eligibilities.date",
+      "facilities.name",
+      "facilities.city",
+      "facilities.state",
+      "facilities.zip",
+      "facilities_studies.date",
+      "interventions_studies.date",
+      "outcome_analyses.non_inferiority_description",
+      "outcome_analyses.ci_n_sides",
+      "outcome_analyses.ci_percent",
+      "outcome_analyses.ci_upper_limit_na_comment",
+      "outcome_analyses.method_description",
+      "outcome_analyses.estimate_description",
+      "outcome_analyses.groups_description",
+      "outcome_analyses.other_analysis_description",
+      "outcome_analyses.date",
+      "outcomes.units",
+      "outcomes.units_analyzed",
+      "outcomes.date",
+      "reported_event_totals.date",
+      "sponsors.name",
+      "sponsors_studies.date",
+      "studies.start_date",
+      "studies.acronym",
+      "studies.source",
+      "studies.is_ppsd",
+      "studies.is_us_export",
+      "studies.biospec_retention",
+      "studies.biospec_description",
+      "studies.baseline_type_units_analyzed",
+      "studies.plan_to_share_ipd"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "sponsors_studies->sponsors:sponsor_id"
+    ],
+    "strong": [
+      "conditions_studies->studies:nct_id",
+      "conditions_studies->conditions:condition_id",
+      "designs->studies:nct_id",
+      "drop_withdrawals->studies:nct_id",
+      "eligibilities->studies:nct_id",
+      "facilities_studies->studies:nct_id",
+      "interventions_studies->studies:nct_id",
+      "interventions_studies->interventions:intervention_id",
+      "outcome_analyses->studies:nct_id",
+      "outcomes->studies:nct_id",
+      "reported_event_totals->studies:nct_id",
+      "sponsors_studies->studies:nct_id"
+    ],
+    "very_strong": [
+      "outcome_analyses->outcomes:outcome_id"
+    ],
+    "weak": [
+      "facilities_studies->facilities:facility_id"
+    ]
+  },
+  "p2f_edge": {
+    "moderate": [
+      "studies->eligibilities:nct_id",
+      "studies->drop_withdrawals:nct_id",
+      "studies->sponsors_studies:nct_id",
+      "studies->interventions_studies:nct_id",
+      "studies->conditions_studies:nct_id"
+    ],
+    "strong": [
+      "studies->designs:nct_id",
+      "studies->reported_event_totals:nct_id"
+    ],
+    "very_strong": [
+      "studies->outcomes:nct_id",
+      "studies->outcome_analyses:nct_id",
+      "outcomes->outcome_analyses:outcome_id"
+    ],
+    "weak": [
+      "sponsors->sponsors_studies:sponsor_id",
+      "studies->facilities_studies:nct_id",
+      "facilities->facilities_studies:facility_id",
+      "interventions->interventions_studies:intervention_id",
+      "conditions->conditions_studies:condition_id"
+    ]
+  }
+}

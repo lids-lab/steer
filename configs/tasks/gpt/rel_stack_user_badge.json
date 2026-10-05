@@ -1,0 +1,86 @@
+{
+  "column_filter": {
+    "moderate": [
+      "comments.Text",
+      "postHistory.Text",
+      "postHistory.Comment",
+      "posts.Title",
+      "posts.Body",
+      "users.Location",
+      "users.AboutMe",
+      "users.WebsiteUrl",
+      "postLinks.LinkTypeId",
+      "postLinks.CreationDate",
+      "comments.UserDisplayName",
+      "postHistory.UserDisplayName",
+      "posts.OwnerDisplayName"
+    ],
+    "strong": [
+      "badges.TagBased",
+      "comments.CreationDate",
+      "postHistory.CreationDate",
+      "postHistory.PostHistoryTypeId",
+      "posts.PostTypeId",
+      "posts.CreationDate",
+      "users.AccountId",
+      "users.DisplayName",
+      "votes.VoteTypeId",
+      "votes.CreationDate",
+      "user-badge.timestamp"
+    ],
+    "very_strong": [
+      "badges.Class",
+      "badges.Name",
+      "badges.Date",
+      "users.CreationDate",
+      "posts.Tags"
+    ],
+    "weak": [
+      "comments.ContentLicense",
+      "postHistory.ContentLicense",
+      "posts.ContentLicense",
+      "postHistory.RevisionGUID"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "posts->posts:ParentId",
+      "postLinks->posts:PostId",
+      "postLinks->posts:RelatedPostId"
+    ],
+    "strong": [
+      "votes->posts:PostId",
+      "comments->posts:PostId",
+      "postHistory->posts:PostId"
+    ],
+    "very_strong": [
+      "comments->users:UserId",
+      "posts->users:OwnerUserId",
+      "votes->users:UserId",
+      "postHistory->users:UserId",
+      "badges->users:UserId"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [
+      "users->comments:UserId",
+      "users->postHistory:UserId",
+      "posts->votes:PostId",
+      "posts->comments:PostId",
+      "posts->postHistory:PostId"
+    ],
+    "strong": [
+      "users->posts:OwnerUserId",
+      "users->votes:UserId"
+    ],
+    "very_strong": [
+      "users->badges:UserId"
+    ],
+    "weak": [
+      "posts->postLinks:PostId",
+      "posts->postLinks:RelatedPostId",
+      "posts->posts:ParentId"
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "column_filter": {
+    "moderate": [
+      "transactions.sales_channel_id",
+      "article.product_code",
+      "article.prod_name",
+      "article.product_type_no",
+      "article.product_type_name",
+      "article.product_group_name",
+      "article.department_no",
+      "article.department_name",
+      "article.index_code",
+      "article.index_name",
+      "article.index_group_no",
+      "article.index_group_name",
+      "article.section_no",
+      "article.section_name",
+      "article.garment_group_no",
+      "article.garment_group_name",
+      "article.detail_desc"
+    ],
+    "strong": [
+      "transactions.price",
+      "customer.fashion_news_frequency",
+      "customer.age",
+      "customer.FN"
+    ],
+    "very_strong": [
+      "transactions.t_dat",
+      "customer.Active",
+      "customer.club_member_status"
+    ],
+    "weak": [
+      "article.graphical_appearance_no",
+      "article.graphical_appearance_name",
+      "article.colour_group_code",
+      "article.colour_group_name",
+      "article.perceived_colour_value_id",
+      "article.perceived_colour_value_name",
+      "article.perceived_colour_master_id",
+      "article.perceived_colour_master_name"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "transactions->article:article_id"
+    ],
+    "strong": [],
+    "very_strong": [
+      "transactions->customer:customer_id"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [
+      "customer->user-churn:customer_id"
+    ],
+    "strong": [],
+    "very_strong": [
+      "customer->transactions:customer_id"
+    ],
+    "weak": [
+      "article->transactions:article_id"
+    ]
+  }
+}

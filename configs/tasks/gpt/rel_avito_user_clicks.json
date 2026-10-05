@@ -1,0 +1,78 @@
+{
+  "column_filter": {
+    "moderate": [
+      "AdsInfo.Price",
+      "AdsInfo.Title",
+      "AdsInfo.IsContext",
+      "Category.Level",
+      "Category.ParentCategoryID",
+      "Category.SubcategoryID",
+      "Location.Level",
+      "Location.RegionID",
+      "Location.CityID",
+      "PhoneRequestsStream.IPID",
+      "SearchInfo.IPID",
+      "SearchStream.Position",
+      "SearchStream.ObjectType",
+      "UserInfo.UserAgentID",
+      "UserInfo.UserAgentOSID",
+      "UserInfo.UserDeviceID",
+      "UserInfo.UserAgentFamilyID",
+      "VisitStream.IPID",
+      "SearchInfo.SearchQuery"
+    ],
+    "strong": [
+      "PhoneRequestsStream.PhoneRequestDate",
+      "VisitStream.ViewDate",
+      "SearchInfo.SearchDate",
+      "SearchStream.SearchDate",
+      "SearchInfo.IsUserLoggedOn",
+      "SearchStream.HistCTR"
+    ],
+    "very_strong": [
+      "SearchStream.IsClick"
+    ],
+    "weak": []
+  },
+  "f2p_edge": {
+    "moderate": [
+      "AdsInfo->Category:CategoryID",
+      "AdsInfo->Location:LocationID",
+      "PhoneRequestsStream->AdsInfo:AdID",
+      "SearchInfo->Location:LocationID",
+      "SearchStream->AdsInfo:AdID",
+      "VisitStream->AdsInfo:AdID"
+    ],
+    "strong": [
+      "SearchStream->SearchInfo:SearchID",
+      "SearchInfo->Category:CategoryID"
+    ],
+    "very_strong": [
+      "PhoneRequestsStream->UserInfo:UserID",
+      "SearchInfo->UserInfo:UserID",
+      "VisitStream->UserInfo:UserID"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [
+      "Category->SearchInfo:CategoryID",
+      "Location->SearchInfo:LocationID",
+      "AdsInfo->SearchStream:AdID",
+      "AdsInfo->PhoneRequestsStream:AdID",
+      "AdsInfo->VisitStream:AdID"
+    ],
+    "strong": [
+      "UserInfo->PhoneRequestsStream:UserID",
+      "UserInfo->VisitStream:UserID"
+    ],
+    "very_strong": [
+      "UserInfo->SearchInfo:UserID",
+      "SearchInfo->SearchStream:SearchID"
+    ],
+    "weak": [
+      "Category->AdsInfo:CategoryID",
+      "Location->AdsInfo:LocationID"
+    ]
+  }
+}

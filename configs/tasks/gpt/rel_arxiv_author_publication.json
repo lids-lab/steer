@@ -1,0 +1,53 @@
+{
+  "column_filter": {
+    "moderate": [
+      "authors.Name",
+      "categories.Category",
+      "paperCategories.Submission_Date",
+      "papers.Title",
+      "papers.Abstract"
+    ],
+    "strong": [
+      "authors.ORCID",
+      "papers.Submission_Date",
+      "papers.arXiv_Code"
+    ],
+    "very_strong": [
+      "paperAuthors.Submission_Date"
+    ],
+    "weak": [
+      "citations.Submission_Date",
+      "papers.DOI"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "citations->papers:Paper_ID",
+      "citations->papers:References_Paper_ID",
+      "paperCategories->papers:Paper_ID"
+    ],
+    "strong": [
+      "paperAuthors->papers:Paper_ID",
+      "paperCategories->categories:Category_ID"
+    ],
+    "very_strong": [
+      "paperAuthors->authors:Author_ID"
+    ],
+    "weak": []
+  },
+  "p2f_edge": {
+    "moderate": [
+      "papers->paperAuthors:Paper_ID",
+      "papers->paperCategories:Paper_ID"
+    ],
+    "strong": [],
+    "very_strong": [
+      "authors->paperAuthors:Author_ID"
+    ],
+    "weak": [
+      "papers->citations:Paper_ID",
+      "papers->citations:References_Paper_ID",
+      "categories->paperCategories:Category_ID"
+    ]
+  }
+}

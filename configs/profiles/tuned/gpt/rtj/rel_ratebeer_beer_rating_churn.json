@@ -1,0 +1,20 @@
+{
+  "column_filter": {
+    "very_strong": 1.0,
+    "strong": 0.6,
+    "moderate": 0.2,
+    "weak": 0.0
+  },
+  "p2f_edge": {
+    "very_strong": 1.0,
+    "strong": 0.0,
+    "moderate": 0.6,
+    "weak": 0.2
+  },
+  "f2p_edge": {
+    "very_strong": 1.0,
+    "strong": 0.0,
+    "moderate": 0.6,
+    "weak": 0.0
+  }
+}

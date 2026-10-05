@@ -1,0 +1,80 @@
+{
+  "column_filter": {
+    "moderate": [
+      "AdsInfo.Price",
+      "Category.Level",
+      "Category.ParentCategoryID",
+      "Category.SubcategoryID",
+      "Location.Level",
+      "Location.RegionID",
+      "Location.CityID",
+      "SearchInfo.IsUserLoggedOn",
+      "SearchInfo.SearchQuery",
+      "SearchStream.ObjectType",
+      "UserInfo.UserAgentID",
+      "UserInfo.UserAgentOSID",
+      "UserInfo.UserDeviceID",
+      "UserInfo.UserAgentFamilyID"
+    ],
+    "strong": [
+      "AdsInfo.IsContext",
+      "SearchStream.Position",
+      "SearchStream.SearchDate",
+      "PhoneRequestsStream.PhoneRequestDate",
+      "SearchInfo.SearchDate",
+      "VisitStream.ViewDate"
+    ],
+    "very_strong": [
+      "SearchStream.IsClick",
+      "SearchStream.HistCTR"
+    ],
+    "weak": [
+      "AdsInfo.Title",
+      "PhoneRequestsStream.IPID",
+      "SearchInfo.IPID",
+      "VisitStream.IPID"
+    ]
+  },
+  "f2p_edge": {
+    "moderate": [
+      "AdsInfo->Category:CategoryID",
+      "AdsInfo->Location:LocationID",
+      "SearchInfo->Location:LocationID",
+      "PhoneRequestsStream->UserInfo:UserID",
+      "VisitStream->UserInfo:UserID"
+    ],
+    "strong": [
+      "SearchStream->AdsInfo:AdID",
+      "SearchInfo->Category:CategoryID"
+    ],
+    "very_strong": [
+      "SearchStream->SearchInfo:SearchID",
+      "SearchInfo->UserInfo:UserID"
+    ],
+    "weak": [
+      "PhoneRequestsStream->AdsInfo:AdID",
+      "VisitStream->AdsInfo:AdID"
+    ]
+  },
+  "p2f_edge": {
+    "moderate": [
+      "AdsInfo->SearchStream:AdID",
+      "AdsInfo->PhoneRequestsStream:AdID",
+      "AdsInfo->VisitStream:AdID"
+    ],
+    "strong": [
+      "UserInfo->VisitStream:UserID",
+      "UserInfo->PhoneRequestsStream:UserID"
+    ],
+    "very_strong": [
+      "UserInfo->SearchInfo:UserID",
+      "SearchInfo->SearchStream:SearchID"
+    ],
+    "weak": [
+      "Category->AdsInfo:CategoryID",
+      "Location->AdsInfo:LocationID",
+      "Category->SearchInfo:CategoryID",
+      "Location->SearchInfo:LocationID"
+    ]
+  }
+}
