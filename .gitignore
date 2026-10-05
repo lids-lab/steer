@@ -1,0 +1,22 @@
+# Secrets -- never commit API keys
+.env
+.env.*
+*.secrets
+
+# Python / Rust build artifacts
+__pycache__/
+*.pyc
+.pixi/
+target/
+*.abi3.so
+*.egg-info/
+dist/
+build/
+
+# Large artifacts live on Hugging Face, not in git
+models/*/checkpoints
+models/*/data
+
+# Local outputs
+generated/
+outputs/

@@ -1,0 +1,42 @@
+STEER
+Copyright 2026 Abdalla Mohamed and Ashraf Aboulnaga, University of Texas at Arlington
+
+This product includes software and artifacts developed by third parties.
+STEER's own code is licensed under the Apache License, Version 2.0 (see
+LICENSE). Each third-party component below keeps its own license; where a
+component lives in its own directory, its license notice is kept there.
+
+1. Relational Transformer (RT) and RT-J -- models/rt, models/rtj
+   Copyright (c) 2026 The Relational Transformer Authors
+   MIT License
+   https://github.com/stanford-star/relational-transformer
+   Modified by STEER: the samplers were changed to apply STEER's traversal
+   and column filters; unused training, preprocessing and embedding code was
+   removed.
+
+2. Griffin -- models/griffin
+   Wang et al., "Griffin: Towards a Graph-Centric Relational Database
+   Foundation Model", ICML 2025. Original implementation (Apache-2.0):
+   https://github.com/yanxwb/Griffin
+   The code in models/griffin derives from a zero-shot Griffin variant
+   provided by the Relational Transformer authors, who gave permission to
+   publish it and its checkpoints. Modified by STEER: the sampler was changed
+   to apply STEER's traversal filter.
+
+3. RelBench -- https://github.com/snap-stanford/relbench (MIT for code).
+   Robinson et al., "RelBench: A Benchmark for Deep Learning on Relational
+   Databases", NeurIPS 2024; RelBench v2 for rel-arxiv and rel-ratebeer.
+   The benchmark datasets carry their own terms; see the cards of the
+   Hugging Face repositories that host them.
+
+4. Hosted artifacts (preprocessed data and checkpoints) are mirrored on
+   Hugging Face together with the license and attribution of their source:
+   - Preprocessed v1 databases: stanford-star/relbench-preprocessed
+     (CC BY 4.0; cite RelBench and the RT-J paper).
+   - rel-arxiv and rel-ratebeer: derived from stanford-star/relbench-v2-extra
+     (CC BY-SA 4.0; derivatives keep CC BY-SA 4.0 and attribution).
+   - RT-J weights: stanford-star/rt-j (CC BY 4.0).
+   - RT leave-one-database-out checkpoints: trained by the STEER authors with
+     the RT training pipeline, released under CC BY 4.0.
+   - Griffin checkpoints: provided by the Relational Transformer authors,
+     who gave permission to redistribute them.
