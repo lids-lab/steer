@@ -1,7 +1,7 @@
 # STEER
 
 Code for **STEER: Reducing Inference Cost in Relational Foundation Models through
-Semantically Informed Sampling** (Abdalla Mohamed and Ashraf Aboulnaga, PVLDB 2027).
+Semantically Informed Sampling** (Abdalla Mohamed and Ashraf Aboulnaga, arxiv 2026).
 
 Relational foundation models (RFMs) answer a prediction by sampling a
 neighborhood of rows around the target row and reading it as context. STEER
